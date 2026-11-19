@@ -1,0 +1,8 @@
+<svg width="400" height="500" viewBox="0 0 400 500" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="400" height="500" fill="#131119" />
+  <path d="M0 500C100 350 300 350 400 500" fill="#201D2A" />
+  <circle cx="200" cy="200" r="80" fill="#201D2A" />
+  <text x="200" y="220" font-family="Assistant, sans-serif" font-size="64" font-weight="300" fill="#6667AB" text-anchor="middle">S</text>
+  <text x="200" y="440" font-family="sans-serif" font-size="24" fill="#FFFFFF" opacity="0.8" text-anchor="middle">Savi</text>
+  <text x="200" y="470" font-family="sans-serif" font-size="12" fill="#FFFFFF" opacity="0.4" text-anchor="middle" letter-spacing="2">PORTRAIT FORTHCOMING</text>
+</svg>

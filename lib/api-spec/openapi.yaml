@@ -1,0 +1,971 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: editorial
+    description: Editorial operations
+  - name: editorial-automation
+    description: Admin-only editorial automation
+  - name: newsletter-sources
+    description: Staff-managed Gmail newsletter imports
+  - name: future-work-history
+    description: Staff-only future-work research and review history
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /editorial/future-work/history/runs:
+    get:
+      operationId: listFutureWorkResearchRuns
+      tags: [future-work-history]
+      summary: Page through filtered research runs
+      parameters:
+        - $ref: "#/components/parameters/HistoryFunctionId"
+        - $ref: "#/components/parameters/HistoryCategory"
+        - $ref: "#/components/parameters/HistoryCursor"
+        - $ref: "#/components/parameters/HistoryLimit"
+      responses:
+        "200":
+          description: A deterministic newest-first page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FutureWorkRunHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /editorial/future-work/history/decisions:
+    get:
+      operationId: listFutureWorkEditorialDecisions
+      tags: [future-work-history]
+      summary: Page through decisions joined to their exact versions
+      parameters:
+        - $ref: "#/components/parameters/HistoryFunctionId"
+        - $ref: "#/components/parameters/HistoryCategory"
+        - $ref: "#/components/parameters/HistoryCursor"
+        - $ref: "#/components/parameters/HistoryLimit"
+      responses:
+        "200":
+          description: A deterministic newest-first page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FutureWorkDecisionHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /editorial/future-work/history/versions/{kind}/{id}:
+    get:
+      operationId: getFutureWorkVersionHistory
+      tags: [future-work-history]
+      summary: Retrieve one exact version, all its decisions, and predecessor evidence
+      parameters:
+        - name: kind
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [content, programs, news]
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Exact version detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FutureWorkVersionHistoryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          description: Version not found
+  /editorial/future-work/functions/{id}/source-preflight:
+    post:
+      operationId: preflightFutureWorkResearchSource
+      tags: [future-work-history]
+      summary: Check a saved research source before starting a run
+      description: Staff-only. Checks retrieval and current evidence eligibility without starting research or changing saved data.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FutureWorkSourcePreflightInput"
+      responses:
+        "200":
+          description: Source preflight result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FutureWorkSourcePreflightResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /editorial/generate:
+    post:
+      operationId: generateEditorial
+      tags: [editorial]
+      summary: Generate an editorial draft
+      description: At least one source URL, source text, evidence screenshot, or nonblank guidance is required; this is enforced by the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditorialGenerateInput"
+      responses:
+        "200":
+          description: Generated draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EditorialGenerateResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "422":
+          $ref: "#/components/responses/UnprocessableEntity"
+  /editorial/generate-cover-image:
+    post:
+      operationId: generateEditorialCoverImage
+      tags: [editorial]
+      summary: Generate a representative editorial cover image
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EditorialCoverImageInput"
+      responses:
+        "200":
+          description: Generated image
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EditorialCoverImageResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /editorial/automation/connection:
+    get:
+      operationId: getEditorialAutomationConnection
+      tags: [editorial-automation]
+      summary: Get mailbox connection status
+      description: Admin-only.
+      responses:
+        "200":
+          description: Connection status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationConnectionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /editorial/automation/rules:
+    get:
+      operationId: listEditorialAutomationRules
+      tags: [editorial-automation]
+      summary: List editorial automation rules
+      description: Admin-only.
+      responses:
+        "200":
+          description: Automation rules
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      operationId: createEditorialAutomationRule
+      tags: [editorial-automation]
+      summary: Create an editorial automation rule
+      description: Admin-only. Server supplies defaults for omitted optional fields. Automatic publishing requires explicit confirmation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleInput"
+      responses:
+        "201":
+          description: Created rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /editorial/automation/rules/{id}:
+    patch:
+      operationId: updateEditorialAutomationRule
+      tags: [editorial-automation]
+      summary: Update an editorial automation rule
+      description: Admin-only. All fields are optional; automatic publishing requires explicit confirmation.
+      parameters:
+        - $ref: "#/components/parameters/RuleId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RuleUpdate"
+      responses:
+        "200":
+          description: Updated rule
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RuleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "502":
+          $ref: "#/components/responses/BadGateway"
+    delete:
+      operationId: deleteEditorialAutomationRule
+      tags: [editorial-automation]
+      summary: Delete an editorial automation rule
+      description: Admin-only.
+      parameters:
+        - $ref: "#/components/parameters/RuleId"
+      responses:
+        "200":
+          description: Rule deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletedRuleResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /editorial/automation/rules/{id}/run:
+    post:
+      operationId: runEditorialAutomationRule
+      tags: [editorial-automation]
+      summary: Run an editorial automation rule
+      description: Admin-only.
+      parameters:
+        - $ref: "#/components/parameters/RuleId"
+      responses:
+        "202":
+          description: Automation run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+  /editorial/automation/rules/{id}/runs:
+    get:
+      operationId: listEditorialAutomationRuleRuns
+      tags: [editorial-automation]
+      summary: List runs for an editorial automation rule
+      description: Admin-only.
+      parameters:
+        - $ref: "#/components/parameters/RuleId"
+      responses:
+        "200":
+          description: Automation runs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /newsletter-sources:
+    get:
+      operationId: listNewsletterSources
+      tags: [newsletter-sources]
+      responses:
+        "200":
+          description: Sources and mailbox status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterSourceList"
+    post:
+      operationId: createNewsletterSource
+      tags: [newsletter-sources]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsletterSourceInput"
+      responses:
+        "201":
+          description: Created source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterSource"
+  /newsletter-sources/{id}:
+    put:
+      operationId: updateNewsletterSource
+      tags: [newsletter-sources]
+      parameters:
+        - $ref: "#/components/parameters/NewsletterSourcePathId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewsletterSourceUpdate"
+      responses:
+        "200":
+          description: Updated source
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NewsletterSource"
+    delete:
+      operationId: deleteNewsletterSource
+      tags: [newsletter-sources]
+      parameters:
+        - $ref: "#/components/parameters/NewsletterSourcePathId"
+      responses:
+        "204":
+          description: Deleted; imported drafts are retained
+  /newsletter-sources/{id}/check:
+    post:
+      operationId: checkNewsletterSource
+      tags: [newsletter-sources]
+      parameters:
+        - $ref: "#/components/parameters/NewsletterSourcePathId"
+      responses:
+        "200":
+          description: Completed bounded run
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunReport"
+        "409":
+          description: A run is already in progress
+components:
+  parameters:
+    HistoryFunctionId:
+      name: functionId
+      in: query
+      required: false
+      schema: { type: string, format: uuid }
+    HistoryCategory:
+      name: category
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [all, "2030", "2050", "2100", news, programs]
+        default: all
+    HistoryCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque keyset cursor returned by the preceding page
+      schema: { type: string, maxLength: 512 }
+    HistoryLimit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    RuleId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        pattern: "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$"
+    NewsletterSourcePathId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Administrator access required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    UnprocessableEntity:
+      description: Source could not be processed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Request conflicts with the current resource state
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    BadGateway:
+      description: Upstream automation service failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    FutureWorkSourcePreflightInput:
+      type: object
+      additionalProperties: false
+      required: [revision, sourceIndex]
+      properties:
+        revision:
+          type: integer
+          minimum: 1
+        sourceIndex:
+          type: integer
+          minimum: 0
+          maximum: 9
+    FutureWorkSourcePreflightEvidence:
+      type: object
+      additionalProperties: false
+      required: [category, eligible, reason]
+      properties:
+        category: { type: string }
+        eligible: { type: boolean }
+        reason: { type: string }
+    FutureWorkSourcePreflight:
+      type: object
+      additionalProperties: false
+      required: [url, finalUrl, checkedAt, publisher, finalPublisher, retrieval, format, publicationDate, withinSavedSource, message, evidence, disclaimer]
+      properties:
+        url: { type: string }
+        finalUrl: { type: [string, "null"] }
+        checkedAt: { type: string, format: date-time }
+        publisher: { type: string }
+        finalPublisher: { type: [string, "null"] }
+        retrieval:
+          type: string
+          enum: [retrieved, unsupported, failed]
+        format: { type: [string, "null"] }
+        publicationDate: { type: [string, "null"] }
+        withinSavedSource: { type: [boolean, "null"] }
+        message: { type: string }
+        evidence:
+          type: array
+          items:
+            $ref: "#/components/schemas/FutureWorkSourcePreflightEvidence"
+        disclaimer: { type: string }
+    FutureWorkSourcePreflightResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: "#/components/schemas/FutureWorkSourcePreflight"
+    FutureWorkVersion:
+      type: object
+      description: Complete camel-cased staff version record, including evidence fields
+      required: [id, functionId, status]
+      additionalProperties: true
+      properties:
+        id: { type: string, format: uuid }
+        functionId: { type: string, format: uuid }
+        status: { type: string }
+        previousVersionId:
+          oneOf:
+            - { type: string, format: uuid }
+            - { type: "null" }
+        sources: { type: array, items: { type: object, additionalProperties: true } }
+        supportingQuotes: { type: array, items: {} }
+    FutureWorkRunHistoryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items:
+              type: array
+              items: { type: object, additionalProperties: true }
+            nextCursor:
+              oneOf:
+                - { type: string }
+                - { type: "null" }
+    FutureWorkDecisionHistoryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [items, nextCursor]
+          properties:
+            items:
+              type: array
+              items:
+                type: object
+                required: [id, kind, versionId, action, actor, reason, createdAt, version]
+                additionalProperties: true
+                properties:
+                  id: { type: string, format: uuid }
+                  kind: { type: string, enum: [content, programs, news] }
+                  versionId: { type: string, format: uuid }
+                  action: { type: string }
+                  actor: { type: string }
+                  reason: { type: string }
+                  createdAt: { type: string, format: date-time }
+                  version: { $ref: "#/components/schemas/FutureWorkVersion" }
+            nextCursor:
+              oneOf:
+                - { type: string }
+                - { type: "null" }
+    FutureWorkVersionHistoryResponse:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [version, decisions, previousVersion]
+          properties:
+            version: { $ref: "#/components/schemas/FutureWorkVersion" }
+            decisions:
+              type: array
+              items: { type: object, additionalProperties: true }
+            previousVersion:
+              oneOf:
+                - { $ref: "#/components/schemas/FutureWorkVersion" }
+                - { type: "null" }
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required: [status]
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          oneOf:
+            - type: string
+            - type: object
+              additionalProperties: true
+      required: [error]
+    EditorialCollection:
+      type: string
+      enum: [newsletters, masterclasses, future-work, events, talks, contributors, communities]
+    EditorialGenerateInput:
+      type: object
+      additionalProperties: false
+      properties:
+        collection:
+          $ref: "#/components/schemas/EditorialCollection"
+        sourceUrl:
+          type: string
+        sourceText:
+          type: string
+          minLength: 1
+          maxLength: 60000
+        screenshotUrl:
+          type: string
+          pattern: "^/api/storage/evidence/drive/[a-zA-Z0-9_-]{10,200}$"
+        screenshotUrls:
+          type: array
+          maxItems: 8
+          items:
+            type: string
+            pattern: "^/api/storage/evidence/drive/[a-zA-Z0-9_-]{10,200}$"
+        guidance:
+          type: string
+          maxLength: 10000
+        currentDraft:
+          type: object
+          additionalProperties: true
+      required: [collection]
+    EditorialGenerateResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          additionalProperties: true
+      required: [data]
+    EditorialCoverImageInput:
+      type: object
+      additionalProperties: false
+      properties:
+        collection:
+          $ref: "#/components/schemas/EditorialCollection"
+        title:
+          type: string
+          minLength: 1
+          maxLength: 500
+        description:
+          type: string
+          maxLength: 4000
+      required: [collection, title]
+    EditorialCoverImageResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/CoverImage"
+      required: [data]
+    CoverImage:
+      type: object
+      properties:
+        url:
+          type: string
+        provenance:
+          type: string
+      required: [url, provenance]
+    AutomationConnection:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        email:
+          type: [string, "null"]
+        error:
+          type: [string, "null"]
+      required: [connected]
+    AutomationConnectionResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/AutomationConnection"
+      required: [data]
+    Rule:
+      type: object
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        name: { type: string }
+        collection:
+          $ref: "#/components/schemas/EditorialCollection"
+        senders:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items:
+            type: string
+            pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+        search: { type: string }
+        guidance: { type: string }
+        enabled: { type: boolean }
+        publishMode:
+          type: string
+          enum: [draft, automatic]
+        scheduleUtc:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        lookbackDays:
+          type: number
+          multipleOf: 1
+          minimum: 1
+          maximum: 30
+        maxItems:
+          type: number
+          multipleOf: 1
+          minimum: 1
+          maximum: 20
+        nextRunAt: { type: string, format: date-time }
+        lastRunAt: { type: [string, "null"], format: date-time }
+        lastError: { type: [string, "null"] }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, name, collection, senders, search, guidance, enabled, publishMode, scheduleUtc, lookbackDays, maxItems, nextRunAt, lastRunAt, lastError, createdAt, updatedAt]
+    RuleInput:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        collection:
+          $ref: "#/components/schemas/EditorialCollection"
+        senders:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+        search: { type: string, maxLength: 500, default: "" }
+        guidance: { type: string, maxLength: 4000, default: "" }
+        enabled: { type: boolean, default: false }
+        publishMode:
+          type: string
+          enum: [draft, automatic]
+          default: draft
+        scheduleUtc:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+          default: "02:00"
+        lookbackDays: { type: number, multipleOf: 1, minimum: 1, maximum: 30, default: 7 }
+        maxItems: { type: number, multipleOf: 1, minimum: 1, maximum: 20, default: 10 }
+        confirmAutomaticPublishing:
+          type: boolean
+          description: Must be true when publishMode is automatic; omitted values default to false.
+          default: false
+      required: [name, collection, senders]
+    RuleUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1 }
+        collection:
+          $ref: "#/components/schemas/EditorialCollection"
+        senders:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+        search: { type: string, maxLength: 500 }
+        guidance: { type: string, maxLength: 4000 }
+        enabled: { type: boolean }
+        publishMode:
+          type: string
+          enum: [draft, automatic]
+        scheduleUtc:
+          type: string
+          pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+        lookbackDays: { type: number, multipleOf: 1, minimum: 1, maximum: 30 }
+        maxItems: { type: number, multipleOf: 1, minimum: 1, maximum: 20 }
+        confirmAutomaticPublishing:
+          type: boolean
+          description: Must be true when publishMode is automatic; omitted values default to false.
+          default: false
+    RuleResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Rule"
+      required: [data]
+    RuleListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Rule"
+      required: [data]
+    Run:
+      type: object
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        ruleId: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        status:
+          type: string
+          enum: [running, completed, failed]
+        startedAt: { type: string, format: date-time }
+        finishedAt: { type: [string, "null"], format: date-time }
+        matched: { type: number, multipleOf: 1, minimum: 0 }
+        attempted: { type: number, multipleOf: 1, minimum: 0 }
+        created: { type: number, multipleOf: 1, minimum: 0 }
+        skipped: { type: number, multipleOf: 1, minimum: 0 }
+        failed: { type: number, multipleOf: 1, minimum: 0 }
+        error: { type: [string, "null"] }
+      required: [id, ruleId, status, startedAt, finishedAt, matched, attempted, created, skipped, failed, error]
+    RunResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/Run"
+      required: [data]
+    RunListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Run"
+      required: [data]
+    DeletedRule:
+      type: object
+      properties:
+        id:
+          type: string
+          pattern: "^[0-9a-fA-F-]{36}$"
+      required: [id]
+    DeletedRuleResponse:
+      type: object
+      properties:
+        data:
+          $ref: "#/components/schemas/DeletedRule"
+      required: [data]
+    RunDraft:
+      type: object
+      additionalProperties: false
+      required: [id, title]
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        title: { type: string }
+    RunReport:
+      type: object
+      additionalProperties: false
+      required: [id, status, startedAt, completedAt, fetched, created, skipped, failed, errors, drafts, message, hasMore]
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        status: { type: string, enum: [running, succeeded, partial, failed] }
+        startedAt: { type: string, format: date-time }
+        completedAt: { type: ["string", "null"], format: date-time }
+        fetched: { type: number, minimum: 0, multipleOf: 1 }
+        created: { type: number, minimum: 0, multipleOf: 1 }
+        skipped: { type: number, minimum: 0, multipleOf: 1 }
+        failed: { type: number, minimum: 0, multipleOf: 1 }
+        errors:
+          type: array
+          items: { type: string }
+        drafts:
+          type: array
+          items: { $ref: "#/components/schemas/RunDraft" }
+        message: { type: string }
+        hasMore: { type: boolean }
+    NewsletterSource:
+      type: object
+      additionalProperties: false
+      required: [id, name, senderEmail, subjectKeywords, instructions, referenceUrls, contributorId, enabled, version, createdAt, updatedAt, nextRunAt, lastRun]
+      properties:
+        id: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        name: { type: string }
+        senderEmail: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$" }
+        subjectKeywords:
+          type: array
+          items: { type: string }
+        instructions: { type: string }
+        referenceUrls:
+          type: array
+          items: { type: string, pattern: "^https?://" }
+        contributorId: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        enabled: { type: boolean }
+        version: { type: number, minimum: 1, multipleOf: 1 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        nextRunAt: { type: ["string", "null"], format: date-time }
+        lastRun:
+          oneOf:
+            - $ref: "#/components/schemas/RunReport"
+            - type: "null"
+    NewsletterSourceInput:
+      type: object
+      additionalProperties: false
+      required: [name, senderEmail, subjectKeywords, instructions, referenceUrls, contributorId, enabled]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 200 }
+        senderEmail: { type: string, pattern: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", maxLength: 320 }
+        subjectKeywords:
+          type: array
+          maxItems: 20
+          items: { type: string, minLength: 1, maxLength: 100 }
+        instructions: { type: string, maxLength: 4000 }
+        referenceUrls:
+          type: array
+          maxItems: 20
+          items: { type: string, pattern: "^https?://", maxLength: 2000 }
+        contributorId: { type: string, pattern: "^[0-9a-fA-F-]{36}$" }
+        enabled: { type: boolean }
+    NewsletterSourceUpdate:
+      allOf:
+        - $ref: "#/components/schemas/NewsletterSourceInput"
+        - type: object
+          required: [expectedVersion]
+          properties:
+            expectedVersion: { type: number, minimum: 1, multipleOf: 1 }
+    NewsletterSourceList:
+      type: object
+      additionalProperties: false
+      required: [sources, scheduleUtc, mailbox, connectionError]
+      properties:
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/NewsletterSource" }
+        scheduleUtc: { type: string, const: "02:00" }
+        mailbox: { type: ["string", "null"] }
+        connectionError: { type: ["string", "null"] }

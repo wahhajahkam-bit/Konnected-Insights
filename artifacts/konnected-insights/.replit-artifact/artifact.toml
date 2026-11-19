@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Könnected Insights Relaunch"
+description = "A futuristic public relaunch of Könnected Insights: an immersive summit and community experience for leaders, founders, investors, and operators shaping what comes next."
+version = "1.0.0"
+id = "artifacts/konnected-insights"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25141
+
+[services.development]
+run = "pnpm --filter @workspace/konnected-insights run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/konnected-insights", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/konnected-insights/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25141"
+BASE_PATH = "/"

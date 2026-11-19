@@ -1,0 +1,75 @@
+modules = ["nodejs-24", "python-base-3.13", "postgresql-16"]
+
+[deployment]
+router = "application"
+deploymentTarget = "autoscale"
+
+[deployment.postBuild]
+args = ["pnpm", "store", "prune"]
+env = { "CI" = "true" }
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "editorial-journeys"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "saved-source-regressions"
+
+[[workflows.workflow]]
+name = "editorial-journeys"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm --filter @workspace/konnected-insights run test:e2e:ci"
+
+[workflows.workflow.metadata]
+isValidation = true
+
+[[workflows.workflow]]
+name = "saved-source-regressions"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "FUTURE_WORK_PREFLIGHT_TEST_DATABASE=development node scripts/saved-source-regressions.mjs"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[agent]
+stack = "PNPM_WORKSPACE"
+expertMode = true
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
+
+[nix]
+channel = "stable-25_05"
+packages = ["glib", "nss", "nspr", "dbus", "atk", "at-spi2-atk", "cups", "libdrm", "expat", "libxkbcommon", "pango", "cairo", "alsa-lib", "xorg.libX11", "xorg.libXcomposite", "xorg.libXdamage", "xorg.libXext", "xorg.libXfixes", "xorg.libXrandr", "xorg.libxcb", "libgbm"]
+
+[[ports]]
+localPort = 8080
+externalPort = 8080
+
+[[ports]]
+localPort = 8081
+externalPort = 80
+
+[[ports]]
+localPort = 8082
+externalPort = 3001
+
+[[ports]]
+localPort = 25141
+externalPort = 3000
