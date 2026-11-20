@@ -61,6 +61,7 @@ packages = ["glib", "nss", "nspr", "dbus", "atk", "at-spi2-atk", "cups", "libdrm
 [[ports]]
 localPort = 8080
 externalPort = 8080
+exposeLocalhost = true
 
 [[ports]]
 localPort = 8081

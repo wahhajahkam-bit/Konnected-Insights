@@ -6,7 +6,8 @@ test("required source, config, tests and public assets are retained", () => {
   for (const path of ["pnpm-lock.yaml", ".replit", "artifacts/api-server/.replit-artifact/artifact.toml",
     "artifacts/api-server/src/lib/example.test.ts", "lib/db/migrations/future-work.sql",
     "artifacts/konnected-insights/public/original/dubai-skyline.jpg",
-    "artifacts/konnected-insights/public/robots.txt", "scripts/source-backup.mjs"]) {
+    "artifacts/konnected-insights/public/robots.txt", "scripts/source-backup.mjs",
+    "docs/backup-decryption.md", "docs/github-backup-security.md"]) {
     assert.equal(isIncluded(path), true, path);
   }
 });

@@ -1,14 +1,21 @@
 # GitHub source backups
 
 Destination: https://github.com/ahkamkhalid-png/K-nnected-Insights  
-Backup branch: **`source-backup`** (private repository). Existing GitHub `main`
-is preserved, including its old content and history.
+Backup branch: **`source-backup`** (private repository). On 2026-09-22, with
+separate user approval, GitHub `main` was replaced with the clean backup history.
+See `docs/older-github-history-review.md` for the findings and verification.
 
 ## Important boundaries
 
 Articles, editorial records, staff access and uploaded media need separate
 recovery arrangements; see the [data and media recovery plan](data-recovery.md).
 That plan requires explicit export/storage approval and an isolated restore drill.
+
+GitHub currently refuses private-repository branch protections because of a
+plan restriction; neither branch is server-protected. See the workspace-only
+report `docs/github-history-safeguards.md` (not exported) for the verified limitation,
+old-clone precautions, and settings proposed for separate approval after an
+eligible plan is available. Local backup checks do not protect other clones.
 
 This is a **manual source backup**, not automatic synchronization or a database,
 editorial upload, deployment, or secret backup. Replit's internal `main` history
@@ -17,8 +24,9 @@ after adding ignore rules. Never use `git push --all`, `--mirror`, or force-push
 
 The first backup commit has no parents. Later backups have only the previous
 verified clean backup as parent. Replit task branches and historical commits
-are never uploaded. Existing internal records on GitHub's old `main` are not
-removed by this procedure; deleting them from history is a separate decision.
+are never uploaded. Routine backups do not modify GitHub `main`. The separately
+approved cleanup removed the old lineage from branch history, not necessarily
+from GitHub caches or existing clones. It does not authorize future force-pushes.
 
 ## Repeat a backup from the main Replit workspace
 
@@ -74,7 +82,8 @@ Included: application/backend/library source, tests and synthetic test fixtures,
 package manifests, lockfile, schema migrations (not data dumps), required public
 assets, published seed/fallback content, operational source documentation,
 and selected workspace/build configuration. A generated backup README replaces
-any workspace README. The old GitHub README is left on its existing branch.
+any workspace README. After the separately approved cleanup, GitHub `main`
+also uses the clean snapshot README.
 
 Excluded: `.agents`, `.local`, attached uploads and prompts, screenshots,
 reference material, verification/evidence reports, dependencies, build output,

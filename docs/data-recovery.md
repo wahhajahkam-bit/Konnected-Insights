@@ -1,7 +1,7 @@
 # Editorial data and media recovery plan
 
-Status: **GitHub destination requested by owner; encrypted runtime export and
-isolated restore drill not yet implemented**.
+Status: **GitHub destination and encrypted backup implementation approved;
+real-data export blocked on secure passphrase/source configuration**.
 No runtime data has been exported or restored under this plan. This document does
 not change publishing, schedulers, database schemas or the GitHub backup process.
 
@@ -159,11 +159,19 @@ Platform references:
 
 ## Current approval / evidence record
 
-- Source environment and export scope: pending.
+- Export scope: owner requested comprehensive encrypted backup; source
+  environment/connection must still be explicitly identified before export.
 - Private destination: owner-selected GitHub repository above; privacy and write
   access verified on 2026-09-22. Encryption key/custody setup pending.
 - Retention and recovery objectives: proposed above, pending.
-- Legacy Drive / Clerk export permissions: not granted.
-- Synthetic isolated drill: not yet run; target/implementation approval pending.
-- Real-snapshot isolated drill: not run; export and storage approval pending.
+- Legacy Drive / Clerk: not included in PostgreSQL exports; independent
+  authenticated access and recovery procedures still required.
+- Synthetic isolated drill: passed on PostgreSQL 16.10 on 2026-09-22;
+  independent temporary cluster, exact JSON/UUID and media-hash checks, FK and
+  sequence checks, then cleanup. No application workers or live data used.
+- Real-snapshot isolated drill: not run; secure key/source setup pending.
 - Production changes: none authorized or performed.
+
+Implementation and repository settings:
+[GitHub backup security](github-backup-security.md).
+Recovery commands: [decryption guide](backup-decryption.md).
