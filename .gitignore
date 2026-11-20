@@ -67,3 +67,4 @@ Thumbs.db
 **/backups/
 .agents/outputs/
 screenshots/
+.neon
