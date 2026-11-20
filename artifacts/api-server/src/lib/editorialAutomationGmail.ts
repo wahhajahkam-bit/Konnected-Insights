@@ -1,14 +1,13 @@
 import { ReplitConnectors } from "@replit/connectors-sdk";
 import { automationSearchQuery, senderAddress, withAutomationTimeout } from "./editorialAutomationPolicy";
 
-const connectors = new ReplitConnectors();
 export class AutomationServiceError extends Error {
   constructor(public code: string, message: string) { super(message); }
 }
 const gmail = async (path: string): Promise<any> => {
   let response: Response;
   try {
-    response = await withAutomationTimeout(connectors.proxy("google-mail", path, { method: "GET" }), 30_000);
+    response = await withAutomationTimeout(new ReplitConnectors().proxy("google-mail", path, { method: "GET" }), 30_000);
   } catch {
     throw new AutomationServiceError("GMAIL_UNAVAILABLE", "Gmail is unavailable. Check the connected Gmail account and try again.");
   }

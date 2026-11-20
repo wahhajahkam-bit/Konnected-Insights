@@ -36,7 +36,7 @@ const MAX_SEARCH_PAGES = 2;
 const MAX_FULL_MESSAGES = 3;
 const REQUEST_TIMEOUT_MS = 15_000;
 const RUN_DEADLINE_MS = 75_000;
-const connectors = new ReplitConnectors();
+const connectors = () => new ReplitConnectors();
 
 type SearchResult = {
   threads?: Array<{ id: string; messages?: MinimalMessage[]; error?: unknown; messagesTruncated?: boolean }>;
@@ -64,7 +64,7 @@ const proxyJson = async (path: string) => {
   let timer: NodeJS.Timeout | undefined;
   try {
     const response = await Promise.race([
-      connectors.proxy("google-mail", path, { method: "GET" }),
+      connectors().proxy("google-mail", path, { method: "GET" }),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => reject(new Error("Gmail request timed out")), REQUEST_TIMEOUT_MS);
       }),
@@ -491,7 +491,7 @@ export const runNewsletterSource = async (
 
 export const getMailboxStatus = async () => {
   try {
-    const connections = await connectors.listConnections({
+    const connections = await connectors().listConnections({
       connector_names: "google-mail",
       expand: ["connector"],
       refresh_policy: "auto",
