@@ -15,11 +15,13 @@ async function buildAll() {
   await rm(distDir, { recursive: true, force: true });
 
   await esbuild({
-    entryPoints: [
-      path.resolve(artifactDir, "src/index.ts"),
-      path.resolve(artifactDir, "src/runDueNewsletterSources.ts"),
-      path.resolve(artifactDir, "src/future-work-runner.ts"),
-    ],
+    entryPoints: {
+      // Keep the standalone host's dist/index.mjs contract, without exposing a
+      // src/index.ts listener as an alternative Express function entrypoint.
+      index: path.resolve(artifactDir, "src/standalone.ts"),
+      runDueNewsletterSources: path.resolve(artifactDir, "src/runDueNewsletterSources.ts"),
+      "future-work-runner": path.resolve(artifactDir, "src/future-work-runner.ts"),
+    },
     platform: "node",
     bundle: true,
     format: "esm",
