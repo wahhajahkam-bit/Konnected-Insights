@@ -1,17 +1,16 @@
 # Vercel test site
 
-Import the **repository root** from the `vercel-preview-setup` branch into
-a **new test project**, not the live project. If Vercel's import screen only
-offers the default branch, do not deploy the default branch expecting this
-configuration: select the setup branch for the deployment. If this test
-project treats the branch as Production, its environment and protection must
-still be test-only. Check deployment protection before supplying real data.
+The protected Vercel test project builds the **repository root** from GitHub
+`main`. Its Production environment must still use test-only settings. Do not
+use a live database or move a production domain to this project.
 
 - `konnected-insights` builds the Vite site at `/`. Clean browser routes
   serve `index.html`; URLs for static assets reach the original files.
 - `api-server` serves `/api/*`, including `/api/__clerk`. Its Vercel entry is
   the exported Express app (`src/app.ts`), **not** the Replit server launcher.
-  It does not seed the database, register scheduled jobs, or start a listener
+  The service overrides the standalone package build; Vercel's Express builder
+  bundles the app. Only the standalone host launcher (`src/standalone.ts`)
+  requires PORT. The exported app does not seed the database, register scheduled jobs, or start a listener
   on import. No cron, daemon or separate mockup service is configured.
 - Browser requests use the same origin. No private service binding is needed.
 
